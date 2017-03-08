@@ -6,9 +6,12 @@ const index = fs.readFileSync(`${__dirname}/../client/client.html`);
 const css = fs.readFileSync(`${__dirname}/../client/style.css`);
 
 const users = {};
+const rooms = {};
+let userNum = 1;
 
 let etag = crypto.createHash('sha1').update(JSON.stringify(users));
 let digest = etag.digest('hex');
+
 
 // handle the index page
 const getIndex = (request, response) => {
@@ -49,10 +52,19 @@ const respondMeta = (request, response, status) => {
   response.end();
 };
 
-// return list of users
-const getUsers = (request, response) => {
+const connect = (request, response) => {
+  const responseObj = {
+    id: userNum,
+  };
+  userNum++;
+  return respond(request, response, 200, responseObj);
+};
+
+// return list of users and rooms
+const getUpdate = (request, response) => {
   const responseObj = {
     users,
+    rooms,
   };
 
   if (request.headers['if-none-match'] === digest) {
@@ -61,11 +73,9 @@ const getUsers = (request, response) => {
   return respond(request, response, 200, responseObj);
 };
 
-// return users header
-const getUsersMeta = (request, response) => {
-  console.log('a');
+// return update header
+const getUpdateMeta = (request, response) => {
   if (request.headers['if-none-match'] === digest) {
-      console.log('t');
     return respondMeta(request, response, 304);
   }
   return respondMeta(request, response, 200);
@@ -74,24 +84,29 @@ const getUsersMeta = (request, response) => {
 // add a user
 const addUser = (request, response, body) => {
   const responseObj = {
-    message: 'Name and age are both required.',
+    message: 'Name and id are both required.',
   };
+  
+  if (!body.name) {
+    responseObj.id = 'missingBody';
+    return respond(request, response, 400, responseObj);
+  }
 
-  if (!body.name || !body.age) {
-    responseObj.id = 'missingParams';
+  if (!body.id) {
+    console.log(body['id']);
+    responseObj.id = 'missingId';
     return respond(request, response, 400, responseObj);
   }
 
   let responseCode = 201;
 
-  if (users[body.name]) {
+  if (users[body.id]) {
     responseCode = 204;
   } else {
-    users[body.name] = {};
+    users[body.id] = {};
   }
 
-  users[body.name].name = body.name;
-  users[body.name].age = body.age;
+  users[body.id].name = body.name;
 
   etag = crypto.createHash('sha1').update(JSON.stringify(users));
   digest = etag.digest('hex');
@@ -103,6 +118,36 @@ const addUser = (request, response, body) => {
   return respondMeta(request, response, responseCode);
 };
 
+// add a user
+const joinRoom = (request, response, body) => {
+  const responseObj = {
+    message: 'Name and id are both required.',
+  };
+
+  if (!body.name || !body.id) {
+    responseObj.id = 'missingParams';
+    return respond(request, response, 400, responseObj);
+  }
+
+  let responseCode = 201;
+
+  if (rooms[body.name]) {
+    responseCode = 204;
+  } else {
+    rooms[body.name] = { users: {} };
+  }
+
+  rooms[body.name].users[body.id] = users[body.id];
+
+  // etag = crypto.createHash('sha1').update(JSON.stringify(rooms));
+  // digest = etag.digest('hex');
+
+  if (responseCode === 201) {
+    responseObj.message = 'Created Successfully';
+    return respond(request, response, responseCode, responseObj);
+  }
+  return respondMeta(request, response, responseCode);
+};
 
 // return not found message
 const notFound = (request, response) => {
@@ -120,9 +165,11 @@ const notFoundMeta = (request, response) => respondMeta(request, response, 404);
 module.exports = {
   getIndex,
   getCss,
-  getUsers,
-  getUsersMeta,
+  connect,
+  getUpdate,
+  getUpdateMeta,
   addUser,
+  joinRoom,
   notFound,
   notFoundMeta,
 };

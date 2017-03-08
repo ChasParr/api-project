@@ -13,14 +13,18 @@ const onRequest = (request, response) => {
   switch (request.method) {
     case 'GET':
       switch (parsedUrl.pathname) {
+
         case '/':
           responseHandler.getIndex(request, response);
           break;
         case '/style.css':
           responseHandler.getCss(request, response);
           break;
-        case '/getUsers':
-          responseHandler.getUsers(request, response);
+        case '/connect':
+          responseHandler.connect(request, response);
+          break;
+        case '/getUpdate':
+          responseHandler.getUpdate(request, response);
           break;
         case '/notReal':
           responseHandler.notFound(request, response);
@@ -32,8 +36,9 @@ const onRequest = (request, response) => {
       break;
     case 'HEAD':
       switch (parsedUrl.pathname) {
-        case '/getUsers':
-          responseHandler.getUsersMeta(request, response);
+
+        case '/getUpdate':
+          responseHandler.getUpdateMeta(request, response);
           break;
         case '/notReal':
           responseHandler.notFoundMeta(request, response);
@@ -44,27 +49,51 @@ const onRequest = (request, response) => {
       }
       break;
     case 'POST':
-      if (parsedUrl.pathname === '/addUser') {
-        const res = response;
-        const body = [];
+      switch (parsedUrl.pathname) {
 
-        request.on('error', () => {
-          res.statusCode = 400;
-          res.end();
-        });
+        case '/addUser': {
+          const res = response;
+          const body = [];
 
-        request.on('data', (chunk) => {
-          body.push(chunk);
-        });
+          request.on('error', () => {
+            res.statusCode = 400;
+            res.end();
+          });
 
-        request.on('end', () => {
-          const bodyString = Buffer.concat(body).toString();
-          const bodyParams = query.parse(bodyString);
+          request.on('data', (chunk) => {
+            body.push(chunk);
+          });
 
-          responseHandler.addUser(request, res, bodyParams);
-        });
-      } else {
-        responseHandler.notFound(request, response);
+          request.on('end', () => {
+            const bodyString = Buffer.concat(body).toString();
+            const bodyParams = query.parse(bodyString);
+
+            responseHandler.addUser(request, res, bodyParams);
+          });
+          break; }
+        case '/joinRoom': {
+          const res = response;
+          const body = [];
+
+          request.on('error', () => {
+            res.statusCode = 400;
+            res.end();
+          });
+
+          request.on('data', (chunk) => {
+            body.push(chunk);
+          });
+
+          request.on('end', () => {
+            const bodyString = Buffer.concat(body).toString();
+            const bodyParams = query.parse(bodyString);
+
+            responseHandler.addRoom(request, res, bodyParams);
+          });
+          break; }
+        default:
+          responseHandler.notFound(request, response);
+          break;
       }
       break;
     default:
