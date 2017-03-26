@@ -187,13 +187,15 @@ const postMessage = (request, response, body) => {
 
   const responseCode = 201;
 
-  if (body.name === 'all'){
-    let keys = Object.keys(data.users[body.id].rooms);
-    for(let i = 0; i < keys.length; i++){
-        data.roomMessages[keys[i]].messages.push({ name: data.users[body.id].name, message: body.message });
+  if (body.name === 'all') {
+    const keys = Object.keys(data.users[body.id].rooms);
+    for (let i = 0; i < keys.length; i++) {
+      data.roomMessages[keys[i]].messages.push(
+      { name: data.users[body.id].name, message: body.message });
     }
-  } else if (data.roomMessages[body.name]){
-    data.roomMessages[body.name].messages.push({ name: data.users[body.id].name, message: body.message });
+  } else if (data.roomMessages[body.name]) {
+    data.roomMessages[body.name].messages.push(
+    { name: data.users[body.id].name, message: body.message });
   }
   responseObj.message = 'Message posted';
 
