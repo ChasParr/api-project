@@ -12,6 +12,8 @@ const onRequest = (request, response) => {
 
   switch (request.method) {
     case 'GET':
+      console.log('GET');
+      console.log(parsedUrl.pathname);
       switch (parsedUrl.pathname) {
 
         case '/':
@@ -35,6 +37,7 @@ const onRequest = (request, response) => {
       }
       break;
     case 'HEAD':
+      console.log('HEAD');
       switch (parsedUrl.pathname) {
 
         case '/getUpdate':
@@ -49,6 +52,7 @@ const onRequest = (request, response) => {
       }
       break;
     case 'POST':
+      console.log('POST');
       switch (parsedUrl.pathname) {
 
         case '/addUser': {
@@ -88,7 +92,47 @@ const onRequest = (request, response) => {
             const bodyString = Buffer.concat(body).toString();
             const bodyParams = query.parse(bodyString);
 
-            responseHandler.addRoom(request, res, bodyParams);
+            responseHandler.joinRoom(request, res, bodyParams);
+          });
+          break; }
+        case '/getRoom': {
+          const res = response;
+          const body = [];
+
+          request.on('error', () => {
+            res.statusCode = 400;
+            res.end();
+          });
+
+          request.on('data', (chunk) => {
+            body.push(chunk);
+          });
+
+          request.on('end', () => {
+            const bodyString = Buffer.concat(body).toString();
+            const bodyParams = query.parse(bodyString);
+
+            responseHandler.getRoom(request, res, bodyParams);
+          });
+          break; }
+        case '/submitPost': {
+          const res = response;
+          const body = [];
+
+          request.on('error', () => {
+            res.statusCode = 400;
+            res.end();
+          });
+
+          request.on('data', (chunk) => {
+            body.push(chunk);
+          });
+
+          request.on('end', () => {
+            const bodyString = Buffer.concat(body).toString();
+            const bodyParams = query.parse(bodyString);
+
+            responseHandler.postMessage(request, res, bodyParams);
           });
           break; }
         default:

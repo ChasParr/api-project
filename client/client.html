@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Our simple HTTP server</title>
+  <title>Room APIs</title>
   <link rel="stylesheet" type="text/css" href="/style.css">
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.34/browser.min.js"></script>
@@ -9,43 +9,63 @@
     "use strict";
     
     let uid;
+    let name;
+    let rooms = {};
     
     const displayList = (location, list) => {
-            const listSpot = document.querySelector(location);
-            // clear box
-            listSpot.innerHTML = "";
-            
-			let keys = Object.keys(list);
-			for(let i = 0; i < keys.length; i++){
-                let element = document.createElement("LI");
-                element.innerHTML += (list[i].name);
-                  if (list[i].users){
-                    element.innerHTML += ": ";
-                    let innerKeys = list[i].keys(users);
-                    
-			        for(let j = 0; j < innerKeys.length; j++){
-                      element.innerHTML += list[i].users[j].name + " ";
-                    }
-                  }
-                listLoc.appendChild(element);
-            }
-        };
+        const listSpot = document.querySelector(location);
+        // clear box
+        listSpot.innerHTML = "";
+        let keys = Object.keys(list);
+        for(let i = 0; i < keys.length; i++){
+            let element = document.createElement("LI");
+            element.innerHTML += (list[keys[i]].name);
+              if (list[keys[i]].users){
+                element.innerHTML += ": ";
+                let innerKeys = Object.keys(list[keys[i]].users);
+                
+                for(let j = 0; j < innerKeys.length; j++){
+                  element.innerHTML += "| <i>" + list[keys[i]].users[innerKeys[j]].name + "</i> |";
+                }
+              }
+            listSpot.appendChild(element);
+        }
+    };
 	
+    const displayMessages = (messages) => {
+        console.log(messages);
+        const messageSpot = document.querySelector("#messages")
+        messageSpot.innerHTML = "";
+        for(let i = 0; i < messages.length; i++){
+            let element = document.createElement("LI");
+            element.innerHTML += (messages[i].name);
+            element.innerHTML += ": ";
+            element.innerHTML += (messages[i].message);
+            messageSpot.appendChild(element);
+        }
+    };
+    
     const parseJSON = (xhr, content) => {
         const obj = JSON.parse(xhr.response);
         
         if(obj.message) {
-          const p = document.createElement('p');
-          p.textContent = `Message: ${obj.message}`;
-          content.appendChild(p);
+          //const p = document.createElement('p');
+          console.log(obj.message);
+          //p.textContent = `Message: ${obj.message}`;
+          //content.appendChild(p);
         }
         
-        if(obj.users) {
-          displayList("#userList", obj.users);
+        if(obj.allUsers) {
+          displayList("#userList", obj.allUsers);
         }
         
-        if(obj.rooms) {
-          displayList("#roomList", obj.rooms);
+        if(obj.allRooms) {
+          displayList("#roomList", obj.allRooms);
+          console.log(obj.allRooms);
+        }
+        
+        if(obj.roomData) {
+          displayMessages(obj.roomData.messages);
         }
         
         if(obj.id){
@@ -58,19 +78,16 @@
 		const content = document.querySelector('#content');
 		
 		console.log(xhr.status);
-		
-		console.log(xhr.response);
         
 		if(xhr.response){
-			const obj = JSON.parse(xhr.response);
-			console.log(obj);
+			//const obj = JSON.parse(xhr.response);
 			parseJSON(xhr, content);
 		} else {
 			console.log('recieved');
 		}
 	};
 	
-	const requestUpdate = (e, method, url) => {
+	const requestUpdate = (method, url, params) => {
     
 		const xhr = new XMLHttpRequest();
 		xhr.open(method, url);
@@ -78,16 +95,15 @@
 		
 		xhr.onload = () => handleResponse(xhr);
 		
-		xhr.send();
+		xhr.send(params);
 		
-		e.preventDefault();
 		return false;
 	};
 	
-	const sendPost = (e, uName, url) => {
+	const sendPost = (uName, url, message) => {
 		
 		const xhr = new XMLHttpRequest();
-		xhr.open('/POST', url);
+		xhr.open('POST', url);
 		
 		xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
 		xhr.setRequestHeader('Accept', 'application/json');
@@ -96,12 +112,13 @@
 			handleResponse(xhr);
 		};
 		
-		const formData = `id=${uid}&name=${uName}`;
+		let formData = `id=${uid}&name=${uName}`;
+        if (message){
+            formData += `&message=${message}`;
+        }
         console.log(formData);
 		
 		xhr.send(formData);
-		
-		e.preventDefault();
 		
 		return false;
 	};
@@ -110,32 +127,76 @@
 	const init = () => {
 		const roomForm = document.querySelector("#roomForm");
 		const nameForm = document.querySelector("#nameForm");
+        const viewForm = document.querySelector("#viewForm");
+        const messageForm = document.querySelector("#messageForm");
 		const roomField = document.querySelector("#roomField");
 		const nameField = document.querySelector("#nameField");
+        const viewField = document.querySelector("#viewField");
+        const messageField = document.querySelector("#messageField");
+        const messageRoom = document.querySelector("#messageRoom");
+        const messages = document.querySelector("#messages")
 		const refresh = document.querySelector("#refresh");
-        const connectButton = document.querySelector("#connectButton");
-        
-        const connect = (e) => {
-			requestUpdate(e, 'GET', '/connect');
-        };
 
         
         const getUpdate = (e) => {
-			requestUpdate(e, 'GET', '/getUpdate');
-        }
+			requestUpdate('GET', '/getUpdate');
+            e.preventDefault();
+        };
         
         const addUser = (e) => {
-			sendPost(e, nameField.value, '/addUser');
+            name = nameField.value;
+			sendPost(nameField.value, '/addUser');
+			requestUpdate('GET', '/getUpdate');
+            e.preventDefault();
 		};
         
         const joinRoom = (e) => {
-			sendPost(e, roomField.value, '/joinRoom');
+            if (name){
+                sendPost(roomField.value, '/joinRoom');
+                requestUpdate('GET', '/getUpdate');
+                sendPost(roomField.value, '/getRoom');
+                rooms[roomField.value] = true;
+                let roomOption = document.createElement("OPTION");
+                roomOption.innerHTML = roomField.value;
+                roomOption.value = roomField.value;
+                messageRoom.appendChild(roomOption);
+                let roomViewOption = document.createElement("OPTION");
+                roomViewOption.innerHTML = roomField.value;
+                roomViewOption.value = roomField.value;
+                viewField.appendChild(roomViewOption);
+            }
+            e.preventDefault();
 		};
+        
+        const viewRoom = (e) => {
+            if (name && rooms[viewField.value]){
+                sendPost(viewField.value, '/getRoom');
+                messageRoom.value = viewField.value;
+            } else if (!rooms[viewField.value]){
+                messages.innerHTML = "you aren't in that room";
+            }
+            e.preventDefault();
+        };
+        
+        const sendMessage = (e) => {
+            if (name && (messageRoom.value === 'all' || rooms[messageRoom.value])){
+                sendPost(messageRoom.value, '/submitPost', messageField.value);
+                if (messageRoom.value !== 'all'){
+                    viewField.value = messageRoom.value;
+                    sendPost(viewField.value, '/getRoom');
+                }
+            }
+            e.preventDefault();
+        }
 		
-        connectButton.addEventListener('click', connect);
 		roomForm.addEventListener('submit', joinRoom);
 		nameForm.addEventListener('submit', addUser);
+        viewForm.addEventListener('submit', viewRoom);
+        messageForm.addEventListener('submit', sendMessage);
 		refresh.addEventListener('click', getUpdate);
+        
+		requestUpdate('GET', '/connect');
+		requestUpdate('GET', '/getUpdate');
 	};
 	
 	window.onload = init;
@@ -143,26 +204,44 @@
 </head>
 <body>
   <section id="top">
-    <h3>Room API</h3>
-    <input type="button" id="connectButton" value="Connect"></button>
-    <input type="button" id="refresh" value="Refresh"></button>
+    <h2>Room API</h2>
   </section>
   <section id="content">
     <div id="roomBox">
       <form id="roomForm" action="/joinRoom" method="POST">
         <label for="room">Room: </label>
         <input id="roomField" type="text" name="room" />
-        <input type="submit" value="join" />
+        <input type="submit" value="join/create" />
+        <input type="button" id="refresh" value="Refresh"></button>
       </form>
-      <ul id="roomList"</ul>
+      <h3>Rooms:</h3>
+      <ul id="roomList"></ul>
     </div>
     <div id="userBox">
       <form id="nameForm" action="/addUser" method="POST">
         <label for="name">Name: </label>
         <input id="nameField" type="text" name="name" />
-        <input type="submit" value="change" />
+        <input type="submit" value="set" />
       </form>
-      <ul id="userList"</ul>
+      <h3>Users:</h3>
+      <ul id="userList"></ul>
+    </div>
+      
+    <div id="messageBox">
+      <form id="viewForm" action="/viewRoom" method="POST">
+        <label for="view">Viewing Room: </label>
+        <select id="viewField" name="view"></select>
+        <input type="submit" value="refresh" />
+      </form>
+      <ul id="messages"></ul>
+      <form id="messageForm" action="/submitPost" method="POST">
+        <label for="message">Message: </label>
+        <input id="messageField" type="text" name="message" />
+        <select id="messageRoom" name="room">
+          <option value="all">ALL</option>
+        </select>
+        <input type="submit" value="post" />
+      </form>
     </div>
   </section>
 </body>

@@ -5,17 +5,43 @@ html, body {
   padding: 0;
 }
 
+ul {
+  list-style-type: none;
+}
+
 #top {
   text-align: center;
   margin: 0 auto;
 }
 
-#top h1 {
+#top h2 {
   font-size: 2em;
 }
 
 #content {
-  margin-top: 100px;
-  font-size: 2em;
-  text-align: center;
+  margin-top: 10px;
+  font-size: 1em;
+  text-align: left;
+  height: 75%;
+  background-color: rgb(200,240,200);
+}
+
+#roomBox, #userBox {
+    float: left;
+    height: 100%;
+    width: 25%;
+  background-color: rgb(240,240,200);
+}
+
+#messageBox {
+    float: left;
+    height: 100%;
+    width: 50%;
+  background-color: rgb(200,240,240);
+}
+
+#messages {
+    height: 75%;
+    overflow: scroll;
+    background-color: rgb(240,240,240);
 }
