@@ -20,28 +20,36 @@ ul {
 
 #content {
   margin-top: 10px;
+  padding: 2px;
   font-size: 1em;
   text-align: left;
   height: 75%;
-  background-color: rgb(200,240,200);
 }
 
 #roomBox, #userBox {
     float: left;
-    height: 100%;
-    width: 25%;
-  background-color: rgb(240,240,200);
+    padding: 1% 2.5% 1% 2.5%;
+    height: 98%;
+    width: 20%;
+}
+
+#roomBox {
+    background-color: rgb(244,244,244);
+}
+
+#userBox, #messageBox {
+    background-color: rgb(200,200,200);
 }
 
 #messageBox {
     float: left;
-    height: 100%;
-    width: 50%;
-  background-color: rgb(200,240,240);
+    padding: 1% 2.5% 1% 2.5%;
+    height: 98%;
+    width: 45%;
 }
 
-#messages {
+#messages, #userList, #roomList{
     height: 75%;
     overflow: scroll;
-    background-color: rgb(240,240,240);
+    background-color: rgb(255,255,255);
 }

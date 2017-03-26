@@ -156,6 +156,7 @@
                 requestUpdate('GET', '/getUpdate');
                 sendPost(roomField.value, '/getRoom');
                 rooms[roomField.value] = true;
+                
                 let roomOption = document.createElement("OPTION");
                 roomOption.innerHTML = roomField.value;
                 roomOption.value = roomField.value;
@@ -164,6 +165,8 @@
                 roomViewOption.innerHTML = roomField.value;
                 roomViewOption.value = roomField.value;
                 viewField.appendChild(roomViewOption);
+            } else {
+                messages.innerHTML = "you need to set a username first";
             }
             e.preventDefault();
 		};
@@ -206,38 +209,40 @@
   <section id="top">
     <h2>Room API</h2>
   </section>
+  
   <section id="content">
+    <div id="userBox">
+      <h3>Users:</h3>
+      <ul id="userList"></ul>
+      <form id="nameForm" action="/addUser" method="POST">
+        <label for="name">Name: </label>
+        <input id="nameField" type="text" name="name" />
+        <input type="submit" value="set" />
+      </form>
+    </div>
     <div id="roomBox">
+      <h3>Rooms:</h3>
+      <ul id="roomList"></ul>
       <form id="roomForm" action="/joinRoom" method="POST">
         <label for="room">Room: </label>
         <input id="roomField" type="text" name="room" />
         <input type="submit" value="join/create" />
         <input type="button" id="refresh" value="Refresh"></button>
       </form>
-      <h3>Rooms:</h3>
-      <ul id="roomList"></ul>
-    </div>
-    <div id="userBox">
-      <form id="nameForm" action="/addUser" method="POST">
-        <label for="name">Name: </label>
-        <input id="nameField" type="text" name="name" />
-        <input type="submit" value="set" />
-      </form>
-      <h3>Users:</h3>
-      <ul id="userList"></ul>
     </div>
       
     <div id="messageBox">
+      <h3>Messages:</h3>
       <form id="viewForm" action="/viewRoom" method="POST">
         <label for="view">Viewing Room: </label>
-        <select id="viewField" name="view"></select>
+        <select id="viewField" name="view" ></select>
         <input type="submit" value="refresh" />
       </form>
       <ul id="messages"></ul>
       <form id="messageForm" action="/submitPost" method="POST">
         <label for="message">Message: </label>
         <input id="messageField" type="text" name="message" />
-        <select id="messageRoom" name="room">
+        <select id="messageRoom" name="room" >
           <option value="all">ALL</option>
         </select>
         <input type="submit" value="post" />
