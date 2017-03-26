@@ -54,6 +54,7 @@ const respondMeta = (request, response, status) => {
   response.end();
 };
 
+// give client unique id on connecting
 const connect = (request, response) => {
   const responseObj = {
     id: userNum,
@@ -105,10 +106,12 @@ const addUser = (request, response, body) => {
   if (data.users[body.id]) {
     responseCode = 204;
   } else {
+      // create new user
     data.users[body.id] = {};
     data.users[body.id].id = body.id;
     data.users[body.id].rooms = {};
   }
+  // set username
   data.users[body.id].name = body.name;
 
   etag = crypto.createHash('sha1').update(JSON.stringify(data));
@@ -143,11 +146,13 @@ const joinRoom = (request, response, body) => {
   if (data.rooms[body.name]) {
     responseCode = 204;
   } else {
+      // create room
     data.rooms[body.name] = { users: {} };
     data.rooms[body.name].name = body.name;
     data.roomMessages[body.name] = { messages: [] };
     data.roomMessages[body.name].messages.push({ name: data.users[body.id].name, message: `created room ${body.name}` });
   }
+  // put user in room
   data.rooms[body.name].users[body.id] = data.users[body.id];
   data.users[body.id].rooms[body.name] = body.name;
 
@@ -160,6 +165,7 @@ const joinRoom = (request, response, body) => {
   return respondMeta(request, response, responseCode);
 };
 
+// get all the messages from a room
 const getRoom = (request, response, body) => {
   const responseObj = {};
 
@@ -175,6 +181,7 @@ const getRoom = (request, response, body) => {
   return respond(request, response, responseCode, responseObj);
 };
 
+// post a message to a room
 const postMessage = (request, response, body) => {
   const responseObj = {
     message: 'Room name, uid and a message are all required.',
@@ -187,12 +194,14 @@ const postMessage = (request, response, body) => {
 
   const responseCode = 201;
 
+  // post to all rooms user is in
   if (body.name === 'all') {
     const keys = Object.keys(data.users[body.id].rooms);
     for (let i = 0; i < keys.length; i++) {
       data.roomMessages[keys[i]].messages.push(
       { name: data.users[body.id].name, message: body.message });
     }
+    // post to just one room
   } else if (data.roomMessages[body.name]) {
     data.roomMessages[body.name].messages.push(
     { name: data.users[body.id].name, message: body.message });
